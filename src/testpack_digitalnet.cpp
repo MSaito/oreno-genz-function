@@ -225,7 +225,8 @@ namespace {
                     sum.add(genz_function(func_index, dim, tuple, alpha, beta));
                     digitalNet.nextPoint();
                 }
-                esum.add(abs(expected - sum.get() / count));
+                double er = expected - sum.get() / count;
+                esum.add(er * er);
                 digitalNet.setDigitalShift(true);
                 digitalNet.pointInitialize();
             }
