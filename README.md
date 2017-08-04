@@ -1,2 +1,2 @@
 # oreno-genz-function
-genz function
+not important test of genz function.

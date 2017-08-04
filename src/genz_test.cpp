@@ -1,4 +1,3 @@
-#include "Genz.hpp"
 #include <MCQMCIntegration/DigitalNet.h>
 #include <stdlib.h>
 #include <errno.h>
@@ -7,6 +6,9 @@
 #include <iomanip>
 #include <cmath>
 #include <memory>
+
+#define DEBUG
+#include "Genz.hpp"
 
 using namespace std;
 using namespace MCQMCIntegration;
@@ -32,6 +34,8 @@ int main(int argc, char * argv[])
         return -1;
     }
     cout << "#digital_net_id = " << dec << digital_net_id << endl;
+    cout << "#digital_net_name = " << getDigitalNetName(digital_net_id)
+    << endl;
     cout << "#s = " << dec << s << endl;
     cout << "#start_m = " << dec << start_m << endl;
     cout << "#stop_m = " << dec << stop_m << endl;
@@ -59,10 +63,15 @@ int main(int argc, char * argv[])
         return -1;
     }
     GenzFunction& func = *genz[genz_id-1];
+    cout << "#genz_name = " << func.name() << endl;
+    cout << "#m, abs err, log2(err)" << endl;
     for (int m = start_m; m <= stop_m; m++) {
         DigitalNetID dnid = static_cast<DigitalNetID>(digital_net_id);
+        //cout << "dnid = " << dnid << endl;
         DigitalNet<uint64_t> dn(dnid, s, m);
         int count = 1 << m;
+#if defined(DEBUG)
+#endif
         double err = integral(func, dn, count, s, alpha, beta);
         double l = log2(err);
         cout << dec << m << "," << err << "," << l << endl;

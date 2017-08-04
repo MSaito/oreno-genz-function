@@ -389,7 +389,7 @@ namespace GenzNS {
     void Oscillatory::setTestParams(int dim,  double a[], double b[],
                                     double alpha[], double *) const
     {
-        set01(dim, a, b);
+        // testpack 1, 3 difficulty で割ってから b に入れている
         for (int i = 0; i < dim; i++) {
             b[i] = alpha[i];
         }
@@ -435,7 +435,7 @@ namespace GenzNS {
     void ProductPeak::setTestParams(int dim,  double a[], double b[],
                                     double *, double *) const
     {
-        set01(dim, a, b);
+        ;
     }
 
 // Corner Peak
@@ -498,7 +498,6 @@ namespace GenzNS {
     void CornerPeak::setTestParams(int dim,  double a[], double b[],
                                    double alpha[], double *) const
     {
-        set01(dim, a, b);
         for (int i = 0; i < dim; i++) {
             b[i] = alpha[i];
         }
@@ -544,7 +543,7 @@ namespace GenzNS {
     void Gaussian::setTestParams(int dim,  double a[], double b[],
                                  double *, double *) const
     {
-        set01(dim, a, b);
+        ;
     }
 
 // C0 Function
@@ -586,7 +585,7 @@ namespace GenzNS {
     void C0Function::setTestParams(int dim, double a[], double b[],
                                     double *, double *) const
     {
-        set01(dim, a, b);
+        ;
     }
 
 // Discontinuous
@@ -636,9 +635,9 @@ namespace GenzNS {
     void Discontinuous::setTestParams(int dim, double a[], double b[],
                                       double *, double beta[]) const
     {
-        set01(dim, a, b);
         for (int i = 0; i < dim; i++) {
-            beta[i] = 2 / M_PI;
+            //beta[i] = 2 / M_PI;
+            beta[i] = 1.0;
         }
     }
 }

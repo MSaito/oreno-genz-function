@@ -39,3 +39,5 @@ config.log
 stamp-h1
 /config.status
 /src/config.h.in~
+/result/
+*.o

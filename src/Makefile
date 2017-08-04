@@ -88,7 +88,7 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = x86_64-apple-darwin16.7.0
 host_triplet = x86_64-apple-darwin16.7.0
-noinst_bin_PROGRAMS = genz_test$(EXEEXT)
+noinst_bin_PROGRAMS = genz_test$(EXEEXT) testpack_digitalnet$(EXEEXT)
 subdir = src
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/ax_cxx_compile_stdcxx.m4 \
@@ -110,6 +110,10 @@ am_genz_test_OBJECTS = genz_test.$(OBJEXT) Genz.$(OBJEXT) \
 	$(am__objects_1)
 genz_test_OBJECTS = $(am_genz_test_OBJECTS)
 genz_test_LDADD = $(LDADD)
+am_testpack_digitalnet_OBJECTS = testpack_digitalnet.$(OBJEXT) \
+	testpack.$(OBJEXT)
+testpack_digitalnet_OBJECTS = $(am_testpack_digitalnet_OBJECTS)
+testpack_digitalnet_LDADD = $(LDADD)
 AM_V_P = $(am__v_P_$(V))
 am__v_P_ = $(am__v_P_$(AM_DEFAULT_VERBOSITY))
 am__v_P_0 = false
@@ -151,8 +155,8 @@ AM_V_CCLD = $(am__v_CCLD_$(V))
 am__v_CCLD_ = $(am__v_CCLD_$(AM_DEFAULT_VERBOSITY))
 am__v_CCLD_0 = @echo "  CCLD    " $@;
 am__v_CCLD_1 = 
-SOURCES = $(genz_test_SOURCES)
-DIST_SOURCES = $(genz_test_SOURCES)
+SOURCES = $(genz_test_SOURCES) $(testpack_digitalnet_SOURCES)
+DIST_SOURCES = $(genz_test_SOURCES) $(testpack_digitalnet_SOURCES)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -282,9 +286,13 @@ target_alias =
 top_build_prefix = ../
 top_builddir = ..
 top_srcdir = ..
-noinst_bindir = 
+noinst_bindir = ./
 genz_files = Genz.hpp
+testpack_file = testpack.h kahan.hpp
 genz_test_SOURCES = genz_test.cpp Genz.cpp $(genz_files)
+testpack_digitalnet_SOURCES = testpack_digitalnet.cpp testpack.cpp \
+$(testpack_files)
+
 AM_CXXFLAGS = -I../src -O3 -Wall -Wextra -D__STDC_CONSTANT_MACROS
 all: config.h
 	$(MAKE) $(AM_MAKEFLAGS) all-am
@@ -382,6 +390,10 @@ genz_test$(EXEEXT): $(genz_test_OBJECTS) $(genz_test_DEPENDENCIES) $(EXTRA_genz_
 	@rm -f genz_test$(EXEEXT)
 	$(AM_V_CXXLD)$(CXXLINK) $(genz_test_OBJECTS) $(genz_test_LDADD) $(LIBS)
 
+testpack_digitalnet$(EXEEXT): $(testpack_digitalnet_OBJECTS) $(testpack_digitalnet_DEPENDENCIES) $(EXTRA_testpack_digitalnet_DEPENDENCIES) 
+	@rm -f testpack_digitalnet$(EXEEXT)
+	$(AM_V_CXXLD)$(CXXLINK) $(testpack_digitalnet_OBJECTS) $(testpack_digitalnet_LDADD) $(LIBS)
+
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
 
@@ -390,6 +402,8 @@ distclean-compile:
 
 include ./$(DEPDIR)/Genz.Po
 include ./$(DEPDIR)/genz_test.Po
+include ./$(DEPDIR)/testpack.Po
+include ./$(DEPDIR)/testpack_digitalnet.Po
 
 .cpp.o:
 	$(AM_V_CXX)$(CXXCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<

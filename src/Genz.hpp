@@ -11,12 +11,15 @@ namespace GenzNS {
     class GenzFunction {
     public:
         virtual ~GenzFunction(){};
-        virtual double operator()(int ndim, const double z[],
-                                  const double alpha[], const double beta[])
-            const = 0;
-        virtual double integral(int ndim, const double a[], const double b[],
-                                const double alpha[], const double beta[])
-            const = 0;
+        virtual double operator()(int ndim,
+                                  const double z[],
+                                  const double alpha[],
+                                  const double beta[]) const = 0;
+        virtual double integral(int ndim,
+                                const double a[],
+                                const double b[],
+                                const double alpha[],
+                                const double beta[]) const = 0;
         virtual std::string name() const = 0;
         virtual double difficulty() const = 0;
         virtual void setTestParams(int dim, double a[], double b[],
@@ -106,6 +109,8 @@ namespace GenzNS {
         double beta1[dim];
         double total = 0;
         for (int i = 0; i < dim; i++) {
+            a[i] = 0;
+            b[i] = 1.0;
             alpha1[i] = alpha[i];
             beta1[i] = beta[i];
             total += alpha1[i];
@@ -116,13 +121,42 @@ namespace GenzNS {
             alpha1[i] = alpha1[i] / dfact;
         }
         func.setTestParams(dim, a, b, alpha1, beta1);
+#if defined(DEBUG)
+        cout << "after setTestParams" << endl;
+        cout << "a = (";
+        for (int i = 0; i < dim; i++) {
+            cout << a[i] << " ";
+        }
+        cout << ")" << endl;
+        cout << "b = (";
+        for (int i = 0; i < dim; i++) {
+            cout << b[i] << " ";
+        }
+        cout << ")" << endl;
+        cout << "alpha = (";
+        for (int i = 0; i < dim; i++) {
+            cout << alpha1[i] << " ";
+        }
+        cout << ")" << endl;
+        cout << "beta = (";
+        for (int i = 0; i < dim; i++) {
+            cout << beta1[i] << " ";
+        }
+        cout << ")" << endl;
+#endif
         //digitalNet.pointInitialize();
         double sum = 0;
-        for (int i = 1; i < count; i++) {
+        //for (int i = 1; i < count; i++) {
+        for (int i = 0; i < count; i++) {
             sum += func(dim, digitalNet.getPoint(), alpha1, beta1);
+            digitalNet.nextPoint();
         }
         sum = sum / count;
         double expected = func.integral(dim, a, b, alpha1, beta1);
+#if defined(DEBUG)
+        cout << "expected = " << expected << endl;
+        cout << "sum = " << sum << endl;
+#endif
         return abs(expected - sum);
     }
 
