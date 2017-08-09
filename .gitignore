@@ -40,4 +40,5 @@ stamp-h1
 /config.status
 /src/config.h.in~
 /result/
+/test/
 *.o
