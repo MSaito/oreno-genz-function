@@ -6,11 +6,16 @@
 #include <string>
 #include <random>
 #include <MCQMCIntegration/DigitalNet.h>
+#include <iostream>
+#include <iomanip>
+#include <fstream>
 #include "testpack.h"
 #include "kahan.hpp"
 
 using namespace std;
 using namespace MCQMCIntegration;
+
+//#define DEBUG
 
 namespace {
     struct cmd_opt_t {
@@ -21,18 +26,23 @@ namespace {
         int genz_no;
         int dn_id;
         int rmse;
+        string dnfile;
     };
     bool parse_opt(cmd_opt_t& opt, int argc, char **argv);
     void cmd_message(const string& pgm);
     template<typename D>
     double integral(int func_index, D& digitalNet, int count, int dim,
                     mt19937_64& mt, int rmse);
+    int file_genz(cmd_opt_t& opt);
 }
 
 int main(int argc, char *argv[]) {
     cmd_opt_t opt;
     if (!parse_opt(opt, argc, argv)) {
         return -1;
+    }
+    if (opt.dn_id < 0) {
+        return file_genz(opt);
     }
     DigitalNetID dnid = static_cast<DigitalNetID>(opt.dn_id);
     mt19937_64 mt(opt.seed);
@@ -54,6 +64,35 @@ int main(int argc, char *argv[]) {
 }
 
 namespace {
+    int file_genz(cmd_opt_t& opt)
+    {
+        ifstream dnstream(opt.dnfile);
+        if (!dnstream) {
+            cout << "can't open digital_net_file" << endl;
+            return -1;
+        }
+        DigitalNet<uint64_t> dn(dnstream);
+        dn.pointInitialize();
+        mt19937_64 mt(opt.seed);
+        int s = dn.getS();
+        int m = dn.getM();
+        cout << "#" << genz_name(opt.genz_no) << endl;
+        cout << "# filename = " << opt.dnfile << endl;
+        cout << "# s = " << dec << s << endl;
+        cout << "# m = " << dec << m << endl;
+        if (opt.rmse > 0) {
+            cout << "#m, abs err, log2(RMSE[" << dec << opt.rmse << "])"
+                 << endl;
+        } else {
+            cout << "#m, abs err, log2(err)" << endl;
+        }
+        int count = 1 << m;
+        double error = integral(opt.genz_no, dn, count, s,
+                                mt, opt.rmse);
+        cout << dec << m << "," << error << "," << log2(error) << endl;
+        return 0;
+    }
+
     void cmd_message(const string& pgm)
     {
         cout << pgm << "-s s_dim -m start_m -M end_m -S seed -g genz_no"
@@ -79,7 +118,7 @@ namespace {
         opt.end_m = 0;
         opt.seed = 1;
         opt.genz_no = 0;
-        opt.dn_id = 0;
+        opt.dn_id = -1;
         opt.rmse = 0;
         errno = 0;
         for (;;) {
@@ -154,6 +193,20 @@ namespace {
             cmd_message(pgm);
             return false;
         }
+        if (opt.dn_id >= 0) {
+            return true;
+        }
+        argc -= optind;
+        argv += optind;
+        if (argc <= 0) {
+            error = true;
+        } else {
+            opt.dnfile = argv[0];
+        }
+        if (error) {
+            cmd_message(pgm);
+            return false;
+        }
         return true;
     }
 
@@ -161,6 +214,12 @@ namespace {
     double integral(int func_index, D& digitalNet, int count, int dim,
                     mt19937_64& mt, int rmse)
     {
+#if defined(DEBUG)
+        cout << "func_index = " << dec << func_index << endl;
+        cout << "count = " << dec << count << endl;
+        cout << "dim = " << dec << dim << endl;
+        cout << "rmse = " << dec << rmse << endl;
+#endif
         double expected;
         double a[dim];
         double b[dim];
@@ -238,6 +297,10 @@ namespace {
                 sum.add(genz_function(func_index, dim, tuple, alpha, beta));
                 digitalNet.nextPoint();
             }
+#if defined(DEBUG)
+            cout << "expected = " << expected << endl;
+            cout << "calculated = " << (sum.get() / count) << endl;
+#endif
             return abs(expected - sum.get() / count);
         }
     }
