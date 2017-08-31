@@ -4,13 +4,13 @@
 #include <getopt.h>
 #include <cstdlib>
 #include <string>
-#include <random>
 #include <MCQMCIntegration/DigitalNet.h>
 #include <iostream>
 #include <iomanip>
 #include <fstream>
 #include "testpack.h"
 #include "kahan.hpp"
+#include "make_parameters.hpp"
 
 using namespace std;
 using namespace MCQMCIntegration;
@@ -26,13 +26,17 @@ namespace {
         int genz_no;
         int dn_id;
         int rmse;
+        int original;
+        bool verbose;
         string dnfile;
     };
+
     bool parse_opt(cmd_opt_t& opt, int argc, char **argv);
     void cmd_message(const string& pgm);
     template<typename D>
     double integral(int func_index, D& digitalNet, int count, int dim,
-                    mt19937_64& mt, int rmse);
+                    double alpha[], double beta[], double expected, int rmse,
+                    bool verbose);
     int file_genz(cmd_opt_t& opt);
 }
 
@@ -44,8 +48,20 @@ int main(int argc, char *argv[]) {
     if (opt.dn_id < 0) {
         return file_genz(opt);
     }
+    double a[opt.s_dim];
+    double b[opt.s_dim];
+    double alpha[opt.s_dim];
+    double beta[opt.s_dim];
+    for (size_t i = 0; i < opt.s_dim; i++) {
+        a[i] = 0;
+        b[i] = 0;
+        alpha[i] = 0;
+        beta[i] = 0;
+    }
+    makeParameter(opt.genz_no, opt.s_dim, opt.seed, opt.original,
+                  a, b, alpha, beta, opt.verbose);
+    double expected = genz_integral(opt.genz_no, opt.s_dim, a, b, alpha, beta);
     DigitalNetID dnid = static_cast<DigitalNetID>(opt.dn_id);
-    mt19937_64 mt(opt.seed);
     cout << "#" << genz_name(opt.genz_no) << endl;
     cout << "#" << getDigitalNetName(opt.dn_id) << endl;
     if (opt.rmse > 0) {
@@ -53,11 +69,12 @@ int main(int argc, char *argv[]) {
     } else {
         cout << "#m, abs err, log2(err)" << endl;
     }
+    cout << "#expected = " << expected << endl;
     for (uint32_t m = opt.start_m; m <= opt.end_m; m++) {
         DigitalNet<uint64_t> dn(dnid, opt.s_dim, m);
         int count = 1 << m;
         double error = integral(opt.genz_no, dn, count, opt.s_dim,
-                                mt, opt.rmse);
+                                alpha, beta, expected, opt.rmse, opt.verbose);
         cout << dec << m << "," << error << "," << log2(error) << endl;
     }
     return 0;
@@ -73,9 +90,24 @@ namespace {
         }
         DigitalNet<uint64_t> dn(dnstream);
         dn.pointInitialize();
-        mt19937_64 mt(opt.seed);
+#if defined(DEBUG) && 0
+        dn.showStatus(cout);
+#endif
         int s = dn.getS();
         int m = dn.getM();
+        double a[s];
+        double b[s];
+        double alpha[s];
+        double beta[s];
+        for (int i = 0; i < s; i++) {
+            a[i] = 0;
+            b[i] = 0;
+            alpha[i] = 0;
+            beta[i] = 0;
+        }
+        makeParameter(opt.genz_no, s, opt.seed, opt.original,
+                      a, b, alpha, beta, opt.verbose);
+        double expected = genz_integral(opt.genz_no, s, a, b, alpha, beta);
         cout << "#" << genz_name(opt.genz_no) << endl;
         cout << "# filename = " << opt.dnfile << endl;
         cout << "# s = " << dec << s << endl;
@@ -88,15 +120,15 @@ namespace {
         }
         int count = 1 << m;
         double error = integral(opt.genz_no, dn, count, s,
-                                mt, opt.rmse);
+                                alpha, beta, expected, opt.rmse, opt.verbose);
         cout << dec << m << "," << error << "," << log2(error) << endl;
         return 0;
     }
 
     void cmd_message(const string& pgm)
     {
-        cout << pgm << "-s s_dim -m start_m -M end_m -S seed -g genz_no"
-             << " -d digitalnet_id " << endl;
+        cout << pgm << " -s s_dim -m start_m -M end_m -S seed -g genz_no"
+             << " [-d digitalnet_id] [digitalnet_file] [-o] [-v]" << endl;
     }
 
     bool parse_opt(cmd_opt_t& opt, int argc, char **argv)
@@ -112,6 +144,8 @@ namespace {
             {"genz-no", required_argument, NULL, 'g'},
             {"digitalnet-id", required_argument, NULL, 'd'},
             {"rmse", optional_argument, NULL, 'r'},
+            {"orignal", optional_argument, NULL, 'o'},
+            {"verbose", no_argument, NULL, 'v'},
             {NULL, 0, NULL, 0}};
         opt.s_dim = 0;
         opt.start_m = 0;
@@ -120,9 +154,11 @@ namespace {
         opt.genz_no = 0;
         opt.dn_id = -1;
         opt.rmse = 0;
+        opt.original = 0;
+        opt.verbose = false;
         errno = 0;
         for (;;) {
-            c = getopt_long(argc, argv, "s:m:M:S:g:d:r:", longopts, NULL);
+            c = getopt_long(argc, argv, "s:m:M:S:g:d:r:o::v", longopts, NULL);
             if (error) {
                 break;
             }
@@ -183,6 +219,22 @@ namespace {
                     error = true;
                 }
                 break;
+            case 'o':
+                if (optarg == NULL) {
+                    opt.original = 1;
+                } else if (optarg[0] == 'x') {
+                    opt.original = -1;
+                } else {
+                    opt.original = strtol(optarg, NULL, 10);
+                    if (errno) {
+                        cout << "original shoud be one of {-1, 0, 1}." << endl;
+                        error = true;
+                    }
+                }
+                break;
+            case 'v':
+                opt.verbose = true;
+                break;
             case '?':
             default:
                 error = true;
@@ -212,7 +264,8 @@ namespace {
 
     template<typename D>
     double integral(int func_index, D& digitalNet, int count, int dim,
-                    mt19937_64& mt, int rmse)
+                    double alpha[], double beta[], double expected, int rmse,
+                    bool verbose)
     {
 #if defined(DEBUG)
         cout << "func_index = " << dec << func_index << endl;
@@ -220,61 +273,7 @@ namespace {
         cout << "dim = " << dec << dim << endl;
         cout << "rmse = " << dec << rmse << endl;
 #endif
-        double expected;
-        double a[dim];
-        double b[dim];
-        double alpha[dim];
-        double beta[dim];
-        uniform_real_distribution<double> unif01(0.0, 1.0);
-
-#if defined(SAME_AS_GENZ) || 0
-        double exn;
-        double dfclt;
-        double expnts[] = {1.5, 2.0, 2.0, 1.0, 2.0, 2.0};
-        double difclt[] = {110.0, 600.0, 100.0, 150.0, 100.0};
-
-        exn = expnts[func_index - 1];
-        dfclt = difclt[func_index - 1];
-        for (int i = 0; i < dim; i++) {
-            a[i] = 0.0;
-            b[i] = 1.0;
-        }
-        double total = 0;
-        for (int i = 0; i < dim; i++) {
-            alpha[i] = unif01(mt);
-            beta[i] = unif01(mt);
-            total += alpha[i];
-        }
-        double dfact = total * pow(dim, exn) / dfclt;
-        for (int i = 0; i < dim; i++) {
-            alpha[i] = alpha[i] / dfact;
-        }
-        if ((func_index == 1) || (func_index == 3)) {
-            for (int i = 0; i < dim; i++) {
-                b[i] = alpha[i];
-            }
-        }
-        if (func_index == 6) {
-            for (int i = 0; i < dim; i++) {
-                beta[i] = 2 / M_PI;
-            }
-        }
-#else
-        for (int i = 0; i < dim; i++) {
-            a[i] = 0.0;
-            b[i] = 1.0;
-            alpha[i] = 1.0;
-            if (func_index == 3) {
-                beta[i] = unif01(mt);
-            } else if (func_index == 6) {
-                beta[i] = 2 / M_PI;
-            } else {
-                beta[i] = 1.0;
-            }
-        }
-#endif
         // RMSE　Root Mean Squared Error
-        expected = genz_integral(func_index, dim, a, b, alpha, beta);
         if (rmse > 0) {
             Kahan esum;
             for (int z = 0; z < 100; z++) {
@@ -285,6 +284,10 @@ namespace {
                     digitalNet.nextPoint();
                 }
                 double er = expected - sum.get() / count;
+#if defined(DEBUG)
+                cout << "expected = " << expected << endl;
+                cout << "calculated = " << (sum.get() / count) << endl;
+#endif
                 esum.add(er * er);
                 digitalNet.setDigitalShift(true);
                 digitalNet.pointInitialize();
@@ -299,8 +302,10 @@ namespace {
             }
 #if defined(DEBUG)
             cout << "expected = " << expected << endl;
-            cout << "calculated = " << (sum.get() / count) << endl;
 #endif
+            if (verbose) {
+                cout << "calculated = " << (sum.get() / count) << endl;
+            }
             return abs(expected - sum.get() / count);
         }
     }

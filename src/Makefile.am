@@ -1,11 +1,14 @@
 noinst_bindir=./
 genz_files = Genz.hpp
-testpack_file = testpack.h kahan.hpp
+testpack_file = testpack.h kahan.hpp make_parameters.hpp mt19937_64.hpp \
+change_output.h config.h
 
-noinst_bin_PROGRAMS = genz_test testpack_digitalnet
+noinst_bin_PROGRAMS = genz_test testpack_digitalnet calc_theoretical
 
 genz_test_SOURCES = genz_test.cpp Genz.cpp $(genz_files)
 testpack_digitalnet_SOURCES = testpack_digitalnet.cpp testpack.cpp \
+$(testpack_files)
+calc_theoretical_SOURCES = calc_theoretical.cpp testpack.cpp \
 $(testpack_files)
 
 AM_CXXFLAGS = -I../src -O3 -Wall -Wextra -D__STDC_CONSTANT_MACROS

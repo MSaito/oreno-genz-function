@@ -31,7 +31,7 @@ AX_CXX_COMPILE_STDCXX_14(noext, optional) # keep this order
 #AX_CXX_COMPILE_STDCXX_11(noext, mandatory)
 AX_CXX_COMPILE_STDCXX_11(noext, optional) # my HPC Grid does not support C++11
 
-AC_CHECK_HEADERS([inttypes.h stdint.h stdlib.h])
+AC_CHECK_HEADERS([inttypes.h stdint.h stdlib.h mpi.h])
 
 AC_CHECK_LIB(sqlite3, sqlite3_open, [], [ AC_MSG_ERROR(Need sqlite3) ])
 AC_CHECK_LIB(mcqmcint, main, [], [ AC_MSG_ERROR(Need MCQMCIntegration) ])

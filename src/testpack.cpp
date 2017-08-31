@@ -5,8 +5,10 @@
 # include <ctime>
 # include <string.h>
 # include "testpack.h"
+#include "kahan.hpp"
 
 #define UNUSED(x) (void)(x)
+//#define DEBUG
 
 using namespace std;
 
@@ -789,8 +791,9 @@ double genz_function ( int indx, int ndim, const double z[],
 //
   if ( indx == 1 )
   {
-    total = 2.0 * pi * beta[0] + r8vec_sum ( ndim, z );
-    value = cos ( total );
+      //total = 2.0 * pi * beta[0] + r8vec_sum ( ndim, z ); saito
+      total = 2.0 * pi * beta[0] + r8vec_mulsum ( ndim, alpha, z );
+      value = cos ( total );
   }
 //
 //  Product Peak.
@@ -928,6 +931,20 @@ double genz_integral ( int indx, int ndim, double a[], double b[],
 //
 {
     UNUSED(a); UNUSED(b);
+#if defined(DEBUG)
+    cout << "in genz_integral:indx = " << dec << indx << " ndim = " << ndim
+         << endl;
+    cout << "alpha = {";
+    for (int i = 0; i < ndim; i++) {
+        cout << alpha[i] << " ";
+    }
+    cout << "}" << endl;
+    cout << "beta = {";
+    for (int i = 0; i < ndim; i++) {
+        cout << beta[i] << " ";
+    }
+    cout << "}" << endl;
+#endif
   double ab;
   int *ic;
   int isum;
@@ -942,6 +959,7 @@ double genz_integral ( int indx, int ndim, double a[], double b[],
 //  Oscillatory.
 //
   if ( indx == 1 )
+#if 0
   {
     value = 0.0;
 //
@@ -953,6 +971,14 @@ double genz_integral ( int indx, int ndim, double a[], double b[],
     for ( ; ; )
     {
       tuple_next ( 0, 1, ndim, &rank, ic );
+#if defined(DEBUG)
+      cout << "rank = " << dec << rank << endl;
+      cout << "ic = {";
+      for (int q = 0; q < ndim; q++) {
+          cout << ic[q] << " ";
+      }
+      cout << "}" << endl;
+#endif
 
       if ( rank == 0 )
       {
@@ -988,6 +1014,21 @@ double genz_integral ( int indx, int ndim, double a[], double b[],
       value = - value;
     }
   }
+#else // True Oscillatory maybe.
+  // Oscillatory by M. Saito from Mori's master thesis.
+  {
+      Kahan sum;
+      for (int q = 0; q < ndim; q++) {
+          sum.add(alpha[q] / 2);
+      }
+      double v1 = cos(2 * M_PI * beta[0] + sum.get());
+      double v2 = 1;
+      for (int q = 0; q < ndim; q++) {
+          v2 *= sin(alpha[q] / 2) / (alpha[q] / 2);
+      }
+      value = v1 * v2;
+  }
+#endif
 //
 //  Product Peak.
 //
@@ -2456,6 +2497,21 @@ double r8vec_sum ( int n, const double a[] )
 
   return sum;
 }
+
+double r8vec_mulsum ( int n, const double a[], const double b[] )
+{
+  int i;
+  double sum;
+
+  sum = 0.0;
+  for ( i = 0; i < n; i++ )
+  {
+    sum = sum + a[i] * b[i];
+  }
+
+  return sum;
+}
+
 //****************************************************************************80
 
 void timestamp ( void )

@@ -33,6 +33,7 @@ double r8vec_dot ( int n, const double a1[], const double a2[] );
 void r8vec_median ( int n, double r[], double rmed[3] );
 double r8vec_product ( int n, double a[] );
 double r8vec_sum ( int n, const double a[] );
+double r8vec_mulsum ( int n, const double a[], const double b[] );
 void timestamp ( void );
 void tuple_next ( int m1, int m2, int n, int *rank, int x[] );
 #endif

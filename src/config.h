@@ -19,6 +19,9 @@
 /* Define to 1 if you have the <memory.h> header file. */
 #define HAVE_MEMORY_H 1
 
+/* Define to 1 if you have the <mpi.h> header file. */
+/* #undef HAVE_MPI_H */
+
 /* Define if g++ supports C++0x features. */
 #define HAVE_STDCXX_0X /**/
 

@@ -88,7 +88,8 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = x86_64-apple-darwin16.7.0
 host_triplet = x86_64-apple-darwin16.7.0
-noinst_bin_PROGRAMS = genz_test$(EXEEXT) testpack_digitalnet$(EXEEXT)
+noinst_bin_PROGRAMS = genz_test$(EXEEXT) testpack_digitalnet$(EXEEXT) \
+	calc_theoretical$(EXEEXT)
 subdir = src
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/ax_cxx_compile_stdcxx.m4 \
@@ -105,6 +106,10 @@ CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
 am__installdirs = "$(DESTDIR)$(noinst_bindir)"
 PROGRAMS = $(noinst_bin_PROGRAMS)
+am_calc_theoretical_OBJECTS = calc_theoretical.$(OBJEXT) \
+	testpack.$(OBJEXT)
+calc_theoretical_OBJECTS = $(am_calc_theoretical_OBJECTS)
+calc_theoretical_LDADD = $(LDADD)
 am__objects_1 =
 am_genz_test_OBJECTS = genz_test.$(OBJEXT) Genz.$(OBJEXT) \
 	$(am__objects_1)
@@ -155,8 +160,10 @@ AM_V_CCLD = $(am__v_CCLD_$(V))
 am__v_CCLD_ = $(am__v_CCLD_$(AM_DEFAULT_VERBOSITY))
 am__v_CCLD_0 = @echo "  CCLD    " $@;
 am__v_CCLD_1 = 
-SOURCES = $(genz_test_SOURCES) $(testpack_digitalnet_SOURCES)
-DIST_SOURCES = $(genz_test_SOURCES) $(testpack_digitalnet_SOURCES)
+SOURCES = $(calc_theoretical_SOURCES) $(genz_test_SOURCES) \
+	$(testpack_digitalnet_SOURCES)
+DIST_SOURCES = $(calc_theoretical_SOURCES) $(genz_test_SOURCES) \
+	$(testpack_digitalnet_SOURCES)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -288,9 +295,14 @@ top_builddir = ..
 top_srcdir = ..
 noinst_bindir = ./
 genz_files = Genz.hpp
-testpack_file = testpack.h kahan.hpp
+testpack_file = testpack.h kahan.hpp make_parameters.hpp mt19937_64.hpp \
+change_output.h config.h
+
 genz_test_SOURCES = genz_test.cpp Genz.cpp $(genz_files)
 testpack_digitalnet_SOURCES = testpack_digitalnet.cpp testpack.cpp \
+$(testpack_files)
+
+calc_theoretical_SOURCES = calc_theoretical.cpp testpack.cpp \
 $(testpack_files)
 
 AM_CXXFLAGS = -I../src -O3 -Wall -Wextra -D__STDC_CONSTANT_MACROS
@@ -386,6 +398,10 @@ uninstall-noinst_binPROGRAMS:
 clean-noinst_binPROGRAMS:
 	-test -z "$(noinst_bin_PROGRAMS)" || rm -f $(noinst_bin_PROGRAMS)
 
+calc_theoretical$(EXEEXT): $(calc_theoretical_OBJECTS) $(calc_theoretical_DEPENDENCIES) $(EXTRA_calc_theoretical_DEPENDENCIES) 
+	@rm -f calc_theoretical$(EXEEXT)
+	$(AM_V_CXXLD)$(CXXLINK) $(calc_theoretical_OBJECTS) $(calc_theoretical_LDADD) $(LIBS)
+
 genz_test$(EXEEXT): $(genz_test_OBJECTS) $(genz_test_DEPENDENCIES) $(EXTRA_genz_test_DEPENDENCIES) 
 	@rm -f genz_test$(EXEEXT)
 	$(AM_V_CXXLD)$(CXXLINK) $(genz_test_OBJECTS) $(genz_test_LDADD) $(LIBS)
@@ -401,6 +417,7 @@ distclean-compile:
 	-rm -f *.tab.c
 
 include ./$(DEPDIR)/Genz.Po
+include ./$(DEPDIR)/calc_theoretical.Po
 include ./$(DEPDIR)/genz_test.Po
 include ./$(DEPDIR)/testpack.Po
 include ./$(DEPDIR)/testpack_digitalnet.Po
