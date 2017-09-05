@@ -87,10 +87,14 @@ void makeParameter(int func_index, int dim, int seed, int original,
         for (int i = 0; i < dim; i++) {
             a[i] = 0.0;
             b[i] = 1.0;
-            beta[i] = 0;
             switch (func_index) {
             case 1:
                 alpha[i] = 1.5 - mt.getDouble01();
+                if (i == 0) {
+                    beta[0] = 1.5 - mt.getDouble01();
+                } else {
+                    beta[i] = 0;
+                }
                 break;
             case 2:
                 alpha[i] = 1.5 - mt.getDouble01();
@@ -98,6 +102,7 @@ void makeParameter(int func_index, int dim, int seed, int original,
                 break;
             case 3:
                 alpha[i] = 1.5 - mt.getDouble01();
+                beta[i] = 0;
                 break;
             case 4:
                 alpha[i] = 1.5 - mt.getDouble01();
@@ -109,24 +114,17 @@ void makeParameter(int func_index, int dim, int seed, int original,
                 break;
             case 6:
             default:
-                alpha[i] = 1.5 - mt.getDouble01();
-                beta[i] = mt.getDouble01();
+                alpha[i] = mt.getDouble01() / dim;
+                if (i < 2) {
+                    beta[i] = mt.getDouble01();
+                } else {
+                    beta[i] = 1.0;
+                }
             }
-        }
-        switch (func_index) {
-        case 1:
-            beta[0] = 1.5 - mt.getDouble01();
-            break;
-        case 6:
-            for (int i = 0; i < dim; i++) {
-                beta[i] = 1.2 - mt.getDouble01();
-            }
-            break;
-        default:
-            break;
         }
     }
     if (verbose) {
+        std::cout << "original = " << std::dec << original << std::endl;
         printArray("a", a, dim);
         printArray("b", b, dim);
         printArray("alpha", alpha, dim);

@@ -11,6 +11,7 @@
 #include "testpack.h"
 #include "kahan.hpp"
 #include "make_parameters.hpp"
+#include "RandomNet.hpp"
 
 using namespace std;
 using namespace MCQMCIntegration;
@@ -38,6 +39,7 @@ namespace {
                     double alpha[], double beta[], double expected, int rmse,
                     bool verbose);
     int file_genz(cmd_opt_t& opt);
+    int random_genz(cmd_opt_t& opt);
 }
 
 int main(int argc, char *argv[]) {
@@ -47,6 +49,9 @@ int main(int argc, char *argv[]) {
     }
     if (opt.dn_id < 0) {
         return file_genz(opt);
+    }
+    if (opt.dn_id >= 100) {
+        return random_genz(opt);
     }
     double a[opt.s_dim];
     double b[opt.s_dim];
@@ -125,6 +130,54 @@ namespace {
         return 0;
     }
 
+    int random_genz(cmd_opt_t& opt)
+    {
+        int s = opt.s_dim;
+        RandomNet dn(s, 100);
+        dn.pointInitialize();
+        double a[s];
+        double b[s];
+        double alpha[s];
+        double beta[s];
+        for (int i = 0; i < s; i++) {
+            a[i] = 0;
+            b[i] = 0;
+            alpha[i] = 0;
+            beta[i] = 0;
+        }
+
+        makeParameter(opt.genz_no, s, opt.seed, opt.original,
+                      a, b, alpha, beta, opt.verbose);
+        double expected = genz_integral(opt.genz_no, s, a, b, alpha, beta);
+        cout << "#" << genz_name(opt.genz_no) << endl;
+        cout << "# Random" << endl;
+        cout << "# s = " << dec << s << endl;
+        if (opt.dn_id >= 101) {
+            cout << "# mask by m" << endl;
+        } else {
+            cout << "# not mask by m" << endl;
+        }
+        if (opt.rmse > 0) {
+            cout << "#m, abs err, log2(RMSE[" << dec << opt.rmse << "])" << endl;
+        } else {
+            cout << "#m, abs err, log2(err)" << endl;
+        }
+        cout << "#expected = " << expected << endl;
+        int mask = 64;
+        dn.setMask(mask);
+        for (uint32_t m = opt.start_m; m <= opt.end_m; m++) {
+            if (opt.dn_id >= 101) {
+                dn.setMask(m);
+            }
+            int count = 1 << m;
+            double error = integral(opt.genz_no, dn, count, opt.s_dim,
+                                    alpha, beta, expected, opt.rmse,
+                                    opt.verbose);
+            cout << dec << m << "," << error << "," << log2(error) << endl;
+        }
+    return 0;
+    }
+
     void cmd_message(const string& pgm)
     {
         cout << pgm << " -s s_dim -m start_m -M end_m -S seed -g genz_no"
@@ -145,6 +198,7 @@ namespace {
             {"digitalnet-id", required_argument, NULL, 'd'},
             {"rmse", optional_argument, NULL, 'r'},
             {"orignal", optional_argument, NULL, 'o'},
+            {"bad-parameter", no_argument, NULL, 'x'},
             {"verbose", no_argument, NULL, 'v'},
             {NULL, 0, NULL, 0}};
         opt.s_dim = 0;
@@ -158,7 +212,7 @@ namespace {
         opt.verbose = false;
         errno = 0;
         for (;;) {
-            c = getopt_long(argc, argv, "s:m:M:S:g:d:r:o::v", longopts, NULL);
+            c = getopt_long(argc, argv, "s:m:M:S:g:d:r:o::vx", longopts, NULL);
             if (error) {
                 break;
             }
@@ -231,6 +285,9 @@ namespace {
                         error = true;
                     }
                 }
+                break;
+            case 'x':
+                opt.original = -1;
                 break;
             case 'v':
                 opt.verbose = true;

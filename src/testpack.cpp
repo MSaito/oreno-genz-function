@@ -812,6 +812,7 @@ double genz_function ( int indx, int ndim, const double z[],
 //  Corner Peak.
 //
   else if ( indx == 3 )
+#if 1
   {
 //
 //  For this case, the BETA's are used to randomly select
@@ -831,6 +832,8 @@ double genz_function ( int indx, int ndim, const double z[],
     }
     value = 1.0 / pow ( total, ndim + 1 );
   }
+#else
+#endif
 //
 //  Gaussian.
 //  C++ math library complains about things like exp ( -700 )!

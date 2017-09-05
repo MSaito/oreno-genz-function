@@ -1,7 +1,7 @@
 noinst_bindir=./
 genz_files = Genz.hpp
 testpack_file = testpack.h kahan.hpp make_parameters.hpp mt19937_64.hpp \
-change_output.h config.h
+change_output.h config.h RandomNet.hpp
 
 noinst_bin_PROGRAMS = genz_test testpack_digitalnet calc_theoretical
 

@@ -296,7 +296,7 @@ top_srcdir = ..
 noinst_bindir = ./
 genz_files = Genz.hpp
 testpack_file = testpack.h kahan.hpp make_parameters.hpp mt19937_64.hpp \
-change_output.h config.h
+change_output.h config.h RandomNet.hpp
 
 genz_test_SOURCES = genz_test.cpp Genz.cpp $(genz_files)
 testpack_digitalnet_SOURCES = testpack_digitalnet.cpp testpack.cpp \
