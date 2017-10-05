@@ -21,7 +21,7 @@ void printArray(std::string str, double array[], int len)
 
 void makeParameter(int func_index, int dim, int seed, int original,
                    double a[], double b[], double alpha[], double beta[],
-                   bool verbose)
+                   bool verbose, double difficulty = -1)
 {
     mt19937_64 mt(seed);
 
@@ -50,6 +50,9 @@ void makeParameter(int func_index, int dim, int seed, int original,
             total += alpha[i];
         }
         double dfact = total * pow(dim, exn) / dfclt;
+        if (difficulty > 0) {
+            dfact = total / difficulty;
+        }
         //double dfact = total / dfclt;
         //cout << "#dfact = " << dfact << endl;
         if (func_index != 1 && func_index != 2) {
@@ -75,6 +78,9 @@ void makeParameter(int func_index, int dim, int seed, int original,
             a[i] = 0.0;
             b[i] = 1.0;
             alpha[i] = 1.0;
+            if (difficulty > 0) {
+                alpha[i] = difficulty;
+            }
             if (func_index == 3) {
                 beta[i] = mt.getDouble01();
             } else if (func_index == 6) {

@@ -36,6 +36,9 @@ namespace MCQMCIntegration {
         }
         void setDigitalShift(bool) {
         }
+        int getS() {
+            return s;
+        }
     private:
         int s;
         uint64_t mask;
