@@ -9,7 +9,7 @@
 #include <iomanip>
 #include <fstream>
 #include "testpack.h"
-#include "make_parameters.hpp"
+#include "make_parameters.h"
 
 #if defined(HAVE_MPI_H)
 #include <mpi.h>

@@ -10,8 +10,9 @@
 #include <fstream>
 #include "testpack.h"
 #include "kahan.hpp"
-#include "make_parameters.hpp"
+#include "make_parameters.h"
 #include "RandomNet.hpp"
+#include "adjust_parameters.h"
 
 using namespace std;
 using namespace MCQMCIntegration;
@@ -30,6 +31,7 @@ namespace {
         int original;
         double difficulty;
         bool verbose;
+        bool adjust;
         int digital_shift;
         string dnfile;
     };
@@ -66,9 +68,17 @@ int main(int argc, char *argv[]) {
         alpha[i] = 0;
         beta[i] = 0;
     }
-    makeParameter(opt.genz_no, opt.s_dim, opt.seed, opt.original,
-                  a, b, alpha, beta, opt.verbose, opt.difficulty);
-    double expected = genz_integral(opt.genz_no, opt.s_dim, a, b, alpha, beta);
+    double expected = 1.0;
+    if (opt.adjust) {
+        makeParameter(opt.genz_no, opt.s_dim, opt.seed, opt.original,
+                      a, b, alpha, beta, false, opt.difficulty);
+        expected = adjustParameter(opt.genz_no, opt.s_dim, a, b, alpha, beta,
+                                   opt.verbose);
+    } else {
+        makeParameter(opt.genz_no, opt.s_dim, opt.seed, opt.original,
+                      a, b, alpha, beta, opt.verbose, opt.difficulty);
+        expected = genz_integral(opt.genz_no, opt.s_dim, a, b, alpha, beta);
+    }
     DigitalNetID dnid = static_cast<DigitalNetID>(opt.dn_id);
     cout << "#" << genz_name(opt.genz_no) << endl;
     cout << "#" << getDigitalNetName(opt.dn_id) << endl;
@@ -114,9 +124,17 @@ namespace {
             alpha[i] = 0;
             beta[i] = 0;
         }
-        makeParameter(opt.genz_no, s, opt.seed, opt.original,
-                      a, b, alpha, beta, opt.verbose, opt.difficulty);
-        double expected = genz_integral(opt.genz_no, s, a, b, alpha, beta);
+        double expected = 1.0;
+        if (opt.adjust) {
+            makeParameter(opt.genz_no, opt.s_dim, opt.seed, opt.original,
+                          a, b, alpha, beta, false, opt.difficulty);
+            expected = adjustParameter(opt.genz_no, opt.s_dim, a, b,
+                                       alpha, beta, opt.verbose);
+        } else {
+            makeParameter(opt.genz_no, opt.s_dim, opt.seed, opt.original,
+                          a, b, alpha, beta, opt.verbose, opt.difficulty);
+            expected = genz_integral(opt.genz_no, opt.s_dim, a, b, alpha, beta);
+        }
         cout << "#" << genz_name(opt.genz_no) << endl;
         cout << "# filename = " << opt.dnfile << endl;
         cout << "# s = " << dec << s << endl;
@@ -150,10 +168,17 @@ namespace {
             alpha[i] = 0;
             beta[i] = 0;
         }
-
-        makeParameter(opt.genz_no, s, opt.seed, opt.original,
-                      a, b, alpha, beta, opt.verbose, opt.difficulty);
-        double expected = genz_integral(opt.genz_no, s, a, b, alpha, beta);
+        double expected = 1.0;
+        if (opt.adjust) {
+            makeParameter(opt.genz_no, opt.s_dim, opt.seed, opt.original,
+                          a, b, alpha, beta, false, opt.difficulty);
+            expected = adjustParameter(opt.genz_no, opt.s_dim, a, b,
+                                       alpha, beta, opt.verbose);
+        } else {
+            makeParameter(opt.genz_no, opt.s_dim, opt.seed, opt.original,
+                          a, b, alpha, beta, opt.verbose, opt.difficulty);
+            expected = genz_integral(opt.genz_no, opt.s_dim, a, b, alpha, beta);
+        }
         cout << "#" << genz_name(opt.genz_no) << endl;
         cout << "# Random" << endl;
         cout << "# s = " << dec << s << endl;
@@ -163,7 +188,8 @@ namespace {
             cout << "# not mask by m" << endl;
         }
         if (opt.rmse > 0) {
-            cout << "#m, abs err, log2(RMSE[" << dec << opt.rmse << "])" << endl;
+            cout << "#m, abs err, log2(RMSE[" << dec << opt.rmse << "])"
+                 << endl;
         } else {
             cout << "#m, abs err, log2(err)" << endl;
         }
@@ -187,7 +213,7 @@ namespace {
     {
         cout << pgm << " -s s_dim -m start_m -M end_m -S seed -g genz_no"
              << " [-d digitalnet_id] [-D difficulty]"
-             << " [-o] [-v] [-z]"
+             << " [-o] [-v] [-z] [-a]"
              << " [digitalnet_file]" << endl;
     }
 
@@ -209,6 +235,7 @@ namespace {
             {"difficulty", required_argument, NULL, 'D'},
             {"digital-shift", required_argument, NULL, 'z'},
             {"verbose", no_argument, NULL, 'v'},
+            {"adjust-parameter", no_argument, NULL, 'a'},
             {NULL, 0, NULL, 0}};
         opt.s_dim = 0;
         opt.start_m = 0;
@@ -221,9 +248,10 @@ namespace {
         opt.difficulty = -1;
         opt.verbose = false;
         opt.digital_shift = 0;
+        opt.adjust = false;
         errno = 0;
         for (;;) {
-            c = getopt_long(argc, argv, "s:m:M:S:g:d:r:D:o::vxz:",
+            c = getopt_long(argc, argv, "s:m:M:S:g:d:r:D:o::vaxz:",
                             longopts, NULL);
             if (error) {
                 break;
@@ -317,6 +345,9 @@ namespace {
                 break;
             case 'v':
                 opt.verbose = true;
+                break;
+            case 'a':
+                opt.adjust = true;
                 break;
             case '?':
             default:

@@ -1,13 +1,10 @@
-#pragma once
-#ifndef MAKE_PARAMETERS
-#define MAKE_PARAMETERS
-
 #define _USE_MATH_DEFINES
 #include <inttypes.h>
 #include <cmath>
 #include <iostream>
 #include <iomanip>
 #include "mt19937_64.hpp"
+#include "make_parameters.h"
 
 void printArray(std::string str, double array[], int len)
 {
@@ -21,7 +18,7 @@ void printArray(std::string str, double array[], int len)
 
 void makeParameter(int func_index, int dim, int seed, int original,
                    double a[], double b[], double alpha[], double beta[],
-                   bool verbose, double difficulty = -1)
+                   bool verbose, double difficulty)
 {
     mt19937_64 mt(seed);
 
@@ -137,6 +134,3 @@ void makeParameter(int func_index, int dim, int seed, int original,
         printArray("beta", beta, dim);
     }
 }
-
-
-#endif // MAKE_PARAMETERS

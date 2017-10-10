@@ -90,7 +90,7 @@ build_triplet = x86_64-apple-darwin16.7.0
 host_triplet = x86_64-apple-darwin16.7.0
 noinst_bin_PROGRAMS = genz_test$(EXEEXT) testpack_digitalnet$(EXEEXT) \
 	calc_theoretical$(EXEEXT) saipack_digitalnet$(EXEEXT) \
-	count_highbit$(EXEEXT) simpleout$(EXEEXT)
+	count_highbit$(EXEEXT) simpleout$(EXEEXT) test_adjust$(EXEEXT)
 subdir = src
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/ax_cxx_compile_stdcxx.m4 \
@@ -108,7 +108,7 @@ CONFIG_CLEAN_VPATH_FILES =
 am__installdirs = "$(DESTDIR)$(noinst_bindir)"
 PROGRAMS = $(noinst_bin_PROGRAMS)
 am_calc_theoretical_OBJECTS = calc_theoretical.$(OBJEXT) \
-	testpack.$(OBJEXT)
+	testpack.$(OBJEXT) make_parameters.$(OBJEXT)
 calc_theoretical_OBJECTS = $(am_calc_theoretical_OBJECTS)
 calc_theoretical_LDADD = $(LDADD)
 am_count_highbit_OBJECTS = count_highbit.$(OBJEXT)
@@ -119,14 +119,21 @@ am_genz_test_OBJECTS = genz_test.$(OBJEXT) Genz.$(OBJEXT) \
 	$(am__objects_1)
 genz_test_OBJECTS = $(am_genz_test_OBJECTS)
 genz_test_LDADD = $(LDADD)
-am_saipack_digitalnet_OBJECTS = saipack_digitalnet.$(OBJEXT)
+am_saipack_digitalnet_OBJECTS = saipack_digitalnet.$(OBJEXT) \
+	make_parameters.$(OBJEXT)
 saipack_digitalnet_OBJECTS = $(am_saipack_digitalnet_OBJECTS)
 saipack_digitalnet_LDADD = $(LDADD)
 am_simpleout_OBJECTS = simpleout.$(OBJEXT)
 simpleout_OBJECTS = $(am_simpleout_OBJECTS)
 simpleout_LDADD = $(LDADD)
+am_test_adjust_OBJECTS = test_adjust.$(OBJEXT) \
+	adjust_parameters.$(OBJEXT) testpack.$(OBJEXT) \
+	make_parameters.$(OBJEXT)
+test_adjust_OBJECTS = $(am_test_adjust_OBJECTS)
+test_adjust_LDADD = $(LDADD)
 am_testpack_digitalnet_OBJECTS = testpack_digitalnet.$(OBJEXT) \
-	testpack.$(OBJEXT)
+	testpack.$(OBJEXT) make_parameters.$(OBJEXT) \
+	adjust_parameters.$(OBJEXT)
 testpack_digitalnet_OBJECTS = $(am_testpack_digitalnet_OBJECTS)
 testpack_digitalnet_LDADD = $(LDADD)
 AM_V_P = $(am__v_P_$(V))
@@ -172,10 +179,12 @@ am__v_CCLD_0 = @echo "  CCLD    " $@;
 am__v_CCLD_1 = 
 SOURCES = $(calc_theoretical_SOURCES) $(count_highbit_SOURCES) \
 	$(genz_test_SOURCES) $(saipack_digitalnet_SOURCES) \
-	$(simpleout_SOURCES) $(testpack_digitalnet_SOURCES)
+	$(simpleout_SOURCES) $(test_adjust_SOURCES) \
+	$(testpack_digitalnet_SOURCES)
 DIST_SOURCES = $(calc_theoretical_SOURCES) $(count_highbit_SOURCES) \
 	$(genz_test_SOURCES) $(saipack_digitalnet_SOURCES) \
-	$(simpleout_SOURCES) $(testpack_digitalnet_SOURCES)
+	$(simpleout_SOURCES) $(test_adjust_SOURCES) \
+	$(testpack_digitalnet_SOURCES)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -307,21 +316,24 @@ top_builddir = ..
 top_srcdir = ..
 noinst_bindir = ./
 genz_files = Genz.hpp
-testpack_file = testpack.h kahan.hpp make_parameters.hpp mt19937_64.hpp \
-change_output.h config.h RandomNet.hpp
+testpack_file = testpack.h kahan.hpp make_parameters.h mt19937_64.hpp \
+change_output.h config.h RandomNet.hpp adjust_parameters.h
 
 genz_test_SOURCES = genz_test.cpp Genz.cpp $(genz_files)
 testpack_digitalnet_SOURCES = testpack_digitalnet.cpp testpack.cpp \
-$(testpack_files)
+make_parameters.cpp adjust_parameters.cpp $(testpack_files)
 
 calc_theoretical_SOURCES = calc_theoretical.cpp testpack.cpp \
-$(testpack_files)
+make_parameters.cpp $(testpack_files)
 
 saipack_digitalnet_SOURCES = saipack_digitalnet.cpp saipackpack.hpp \
-$(testpack_files)
+make_parameters.cpp $(testpack_files)
 
 count_highbit_SOURCES = count_highbit.cpp $(testpack_files)
 simpleout_SOURCES = simpleout.cpp $(testpack_files)
+test_adjust_SOURCES = test_adjust.cpp adjust_parameters.cpp testpack.cpp \
+make_parameters.cpp $(testpack_files)
+
 AM_CXXFLAGS = -I../src -O3 -Wall -Wextra -D__STDC_CONSTANT_MACROS
 all: config.h
 	$(MAKE) $(AM_MAKEFLAGS) all-am
@@ -435,6 +447,10 @@ simpleout$(EXEEXT): $(simpleout_OBJECTS) $(simpleout_DEPENDENCIES) $(EXTRA_simpl
 	@rm -f simpleout$(EXEEXT)
 	$(AM_V_CXXLD)$(CXXLINK) $(simpleout_OBJECTS) $(simpleout_LDADD) $(LIBS)
 
+test_adjust$(EXEEXT): $(test_adjust_OBJECTS) $(test_adjust_DEPENDENCIES) $(EXTRA_test_adjust_DEPENDENCIES) 
+	@rm -f test_adjust$(EXEEXT)
+	$(AM_V_CXXLD)$(CXXLINK) $(test_adjust_OBJECTS) $(test_adjust_LDADD) $(LIBS)
+
 testpack_digitalnet$(EXEEXT): $(testpack_digitalnet_OBJECTS) $(testpack_digitalnet_DEPENDENCIES) $(EXTRA_testpack_digitalnet_DEPENDENCIES) 
 	@rm -f testpack_digitalnet$(EXEEXT)
 	$(AM_V_CXXLD)$(CXXLINK) $(testpack_digitalnet_OBJECTS) $(testpack_digitalnet_LDADD) $(LIBS)
@@ -446,11 +462,14 @@ distclean-compile:
 	-rm -f *.tab.c
 
 include ./$(DEPDIR)/Genz.Po
+include ./$(DEPDIR)/adjust_parameters.Po
 include ./$(DEPDIR)/calc_theoretical.Po
 include ./$(DEPDIR)/count_highbit.Po
 include ./$(DEPDIR)/genz_test.Po
+include ./$(DEPDIR)/make_parameters.Po
 include ./$(DEPDIR)/saipack_digitalnet.Po
 include ./$(DEPDIR)/simpleout.Po
+include ./$(DEPDIR)/test_adjust.Po
 include ./$(DEPDIR)/testpack.Po
 include ./$(DEPDIR)/testpack_digitalnet.Po
 
