@@ -90,7 +90,8 @@ build_triplet = x86_64-apple-darwin16.7.0
 host_triplet = x86_64-apple-darwin16.7.0
 noinst_bin_PROGRAMS = genz_test$(EXEEXT) testpack_digitalnet$(EXEEXT) \
 	calc_theoretical$(EXEEXT) saipack_digitalnet$(EXEEXT) \
-	count_highbit$(EXEEXT) simpleout$(EXEEXT) test_adjust$(EXEEXT)
+	count_highbit$(EXEEXT) simpleout$(EXEEXT) test_adjust$(EXEEXT) \
+	test_calc_cvmean$(EXEEXT)
 subdir = src
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/ax_cxx_compile_stdcxx.m4 \
@@ -131,6 +132,10 @@ am_test_adjust_OBJECTS = test_adjust.$(OBJEXT) \
 	make_parameters.$(OBJEXT)
 test_adjust_OBJECTS = $(am_test_adjust_OBJECTS)
 test_adjust_LDADD = $(LDADD)
+am_test_calc_cvmean_OBJECTS = test_calc_cvmean.$(OBJEXT) \
+	cvmean.$(OBJEXT)
+test_calc_cvmean_OBJECTS = $(am_test_calc_cvmean_OBJECTS)
+test_calc_cvmean_LDADD = $(LDADD)
 am_testpack_digitalnet_OBJECTS = testpack_digitalnet.$(OBJEXT) \
 	testpack.$(OBJEXT) make_parameters.$(OBJEXT) \
 	adjust_parameters.$(OBJEXT)
@@ -180,11 +185,11 @@ am__v_CCLD_1 =
 SOURCES = $(calc_theoretical_SOURCES) $(count_highbit_SOURCES) \
 	$(genz_test_SOURCES) $(saipack_digitalnet_SOURCES) \
 	$(simpleout_SOURCES) $(test_adjust_SOURCES) \
-	$(testpack_digitalnet_SOURCES)
+	$(test_calc_cvmean_SOURCES) $(testpack_digitalnet_SOURCES)
 DIST_SOURCES = $(calc_theoretical_SOURCES) $(count_highbit_SOURCES) \
 	$(genz_test_SOURCES) $(saipack_digitalnet_SOURCES) \
 	$(simpleout_SOURCES) $(test_adjust_SOURCES) \
-	$(testpack_digitalnet_SOURCES)
+	$(test_calc_cvmean_SOURCES) $(testpack_digitalnet_SOURCES)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -317,7 +322,7 @@ top_srcdir = ..
 noinst_bindir = ./
 genz_files = Genz.hpp
 testpack_file = testpack.h kahan.hpp make_parameters.h mt19937_64.hpp \
-change_output.h config.h RandomNet.hpp adjust_parameters.h
+change_output.h config.h RandomNet.hpp adjust_parameters.h cvmean.h
 
 genz_test_SOURCES = genz_test.cpp Genz.cpp $(genz_files)
 testpack_digitalnet_SOURCES = testpack_digitalnet.cpp testpack.cpp \
@@ -334,6 +339,7 @@ simpleout_SOURCES = simpleout.cpp $(testpack_files)
 test_adjust_SOURCES = test_adjust.cpp adjust_parameters.cpp testpack.cpp \
 make_parameters.cpp $(testpack_files)
 
+test_calc_cvmean_SOURCES = test_calc_cvmean.cpp cvmean.cpp $(testpack_files)
 AM_CXXFLAGS = -I../src -O3 -Wall -Wextra -D__STDC_CONSTANT_MACROS
 all: config.h
 	$(MAKE) $(AM_MAKEFLAGS) all-am
@@ -451,6 +457,10 @@ test_adjust$(EXEEXT): $(test_adjust_OBJECTS) $(test_adjust_DEPENDENCIES) $(EXTRA
 	@rm -f test_adjust$(EXEEXT)
 	$(AM_V_CXXLD)$(CXXLINK) $(test_adjust_OBJECTS) $(test_adjust_LDADD) $(LIBS)
 
+test_calc_cvmean$(EXEEXT): $(test_calc_cvmean_OBJECTS) $(test_calc_cvmean_DEPENDENCIES) $(EXTRA_test_calc_cvmean_DEPENDENCIES) 
+	@rm -f test_calc_cvmean$(EXEEXT)
+	$(AM_V_CXXLD)$(CXXLINK) $(test_calc_cvmean_OBJECTS) $(test_calc_cvmean_LDADD) $(LIBS)
+
 testpack_digitalnet$(EXEEXT): $(testpack_digitalnet_OBJECTS) $(testpack_digitalnet_DEPENDENCIES) $(EXTRA_testpack_digitalnet_DEPENDENCIES) 
 	@rm -f testpack_digitalnet$(EXEEXT)
 	$(AM_V_CXXLD)$(CXXLINK) $(testpack_digitalnet_OBJECTS) $(testpack_digitalnet_LDADD) $(LIBS)
@@ -465,11 +475,13 @@ include ./$(DEPDIR)/Genz.Po
 include ./$(DEPDIR)/adjust_parameters.Po
 include ./$(DEPDIR)/calc_theoretical.Po
 include ./$(DEPDIR)/count_highbit.Po
+include ./$(DEPDIR)/cvmean.Po
 include ./$(DEPDIR)/genz_test.Po
 include ./$(DEPDIR)/make_parameters.Po
 include ./$(DEPDIR)/saipack_digitalnet.Po
 include ./$(DEPDIR)/simpleout.Po
 include ./$(DEPDIR)/test_adjust.Po
+include ./$(DEPDIR)/test_calc_cvmean.Po
 include ./$(DEPDIR)/testpack.Po
 include ./$(DEPDIR)/testpack_digitalnet.Po
 
