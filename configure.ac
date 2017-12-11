@@ -35,6 +35,7 @@ AC_CHECK_HEADERS([inttypes.h stdint.h stdlib.h mpi.h])
 
 AC_CHECK_LIB(sqlite3, sqlite3_open, [], [ AC_MSG_ERROR(Need sqlite3) ])
 AC_CHECK_LIB(mcqmcint, main, [], [ AC_MSG_ERROR(Need MCQMCIntegration) ])
+AC_CHECK_LIB(trmvnorm, main, [], [ AC_MSG_ERROR(Need TruncatedNormal) ])
 
 AC_LANG_POP
 

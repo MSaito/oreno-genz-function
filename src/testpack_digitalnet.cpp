@@ -11,8 +11,10 @@
 #include "testpack.h"
 #include "kahan.hpp"
 #include "make_parameters.h"
+#include "make_wafomc_parameters.h"
 #include "RandomNet.hpp"
 #include "adjust_parameters.h"
+#include <time.h>
 
 using namespace std;
 using namespace MCQMCIntegration;
@@ -30,9 +32,12 @@ namespace {
         int rmse;
         int original;
         double difficulty;
+        double mag;
         bool verbose;
         bool adjust;
+        bool wafom;
         int digital_shift;
+        bool linearScramble;
         string dnfile;
     };
 
@@ -69,7 +74,11 @@ int main(int argc, char *argv[]) {
         beta[i] = 0;
     }
     double expected = 1.0;
-    if (opt.adjust) {
+    if (opt.wafom) {
+        makeWafomParameter(opt.genz_no, opt.s_dim, opt.seed,
+                           a, b, alpha, beta, opt.verbose, opt.mag);
+        expected = genz_integral(opt.genz_no, opt.s_dim, a, b, alpha, beta);
+    } else if (opt.adjust) {
         makeParameter(opt.genz_no, opt.s_dim, opt.seed, opt.original,
                       a, b, alpha, beta, false, opt.difficulty);
         expected = adjustParameter(opt.genz_no, opt.s_dim, a, b, alpha, beta,
@@ -90,6 +99,10 @@ int main(int argc, char *argv[]) {
     cout << "#expected = " << expected << endl;
     for (uint32_t m = opt.start_m; m <= opt.end_m; m++) {
         DigitalNet<uint64_t> dn(dnid, opt.s_dim, m);
+        dn.setSeed(static_cast<uint64_t>(clock()));
+        if (opt.linearScramble) {
+            dn.linearScramble();
+        }
         int count = 1 << m;
         double error = integral(opt.genz_no, dn, count, opt.s_dim,
                                 alpha, beta, expected, opt.rmse, opt.verbose,
@@ -108,6 +121,10 @@ namespace {
             return -1;
         }
         DigitalNet<uint64_t> dn(dnstream);
+        dn.setSeed(static_cast<uint64_t>(clock()));
+        if (opt.linearScramble) {
+            dn.linearScramble();
+        }
         dn.pointInitialize();
 #if defined(DEBUG) && 0
         dn.showStatus(cout);
@@ -125,7 +142,11 @@ namespace {
             beta[i] = 0;
         }
         double expected = 1.0;
-        if (opt.adjust) {
+        if (opt.wafom) {
+            makeWafomParameter(opt.genz_no, opt.s_dim, opt.seed,
+                               a, b, alpha, beta, opt.verbose, opt.mag);
+            expected = genz_integral(opt.genz_no, opt.s_dim, a, b, alpha, beta);
+        } else if (opt.adjust) {
             makeParameter(opt.genz_no, opt.s_dim, opt.seed, opt.original,
                           a, b, alpha, beta, false, opt.difficulty);
             expected = adjustParameter(opt.genz_no, opt.s_dim, a, b,
@@ -169,7 +190,11 @@ namespace {
             beta[i] = 0;
         }
         double expected = 1.0;
-        if (opt.adjust) {
+        if (opt.wafom) {
+            makeWafomParameter(opt.genz_no, opt.s_dim, opt.seed,
+                               a, b, alpha, beta, opt.verbose, opt.mag);
+            expected = genz_integral(opt.genz_no, opt.s_dim, a, b, alpha, beta);
+        } else if (opt.adjust) {
             makeParameter(opt.genz_no, opt.s_dim, opt.seed, opt.original,
                           a, b, alpha, beta, false, opt.difficulty);
             expected = adjustParameter(opt.genz_no, opt.s_dim, a, b,
@@ -214,7 +239,9 @@ namespace {
         cout << pgm << " -s s_dim -m start_m -M end_m -S seed -g genz_no"
              << " [-d digitalnet_id] [-D difficulty]"
              << " [-o] [-v] [-z] [-a]"
-             << " [digitalnet_file]" << endl;
+             << " [-w mag] [-L]"
+             << " [digitalnet_file]"
+             << endl;
     }
 
     bool parse_opt(cmd_opt_t& opt, int argc, char **argv)
@@ -233,8 +260,10 @@ namespace {
             {"orignal", optional_argument, NULL, 'o'},
             {"bad-parameter", no_argument, NULL, 'x'},
             {"difficulty", required_argument, NULL, 'D'},
+            {"wafom parameter", required_argument, NULL, 'w'},
             {"digital-shift", required_argument, NULL, 'z'},
             {"verbose", no_argument, NULL, 'v'},
+            {"linearScramble", no_argument, NULL, 'L'},
             {"adjust-parameter", no_argument, NULL, 'a'},
             {NULL, 0, NULL, 0}};
         opt.s_dim = 0;
@@ -249,9 +278,12 @@ namespace {
         opt.verbose = false;
         opt.digital_shift = 0;
         opt.adjust = false;
+        opt.wafom = false;
+        opt.mag = 1.0;
+        opt.linearScramble = false;
         errno = 0;
         for (;;) {
-            c = getopt_long(argc, argv, "s:m:M:S:g:d:r:D:o::vaxz:",
+            c = getopt_long(argc, argv, "s:m:M:S:g:d:r:D:w:o::vLaxz:",
                             longopts, NULL);
             if (error) {
                 break;
@@ -320,6 +352,14 @@ namespace {
                     error = true;
                 }
                 break;
+            case 'w':
+                opt.wafom = true;
+                opt.mag = strtod(optarg, NULL) / 100.0;
+                if (errno) {
+                    cout << "mag should be a number" << endl;
+                    error = true;
+                }
+                break;
             case 'o':
                 if (optarg == NULL) {
                     opt.original = 1;
@@ -345,6 +385,9 @@ namespace {
                 break;
             case 'v':
                 opt.verbose = true;
+                break;
+            case 'L':
+                opt.linearScramble = true;
                 break;
             case 'a':
                 opt.adjust = true;

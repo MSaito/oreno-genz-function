@@ -15,6 +15,9 @@
 /* Define to 1 if you have the `sqlite3' library (-lsqlite3). */
 #undef HAVE_LIBSQLITE3
 
+/* Define to 1 if you have the `trmvnorm' library (-ltrmvnorm). */
+#undef HAVE_LIBTRMVNORM
+
 /* Define to 1 if you have the <memory.h> header file. */
 #undef HAVE_MEMORY_H
 

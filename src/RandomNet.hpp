@@ -11,6 +11,8 @@ namespace MCQMCIntegration {
         RandomNet(int s, uint32_t seed) {
             this->s = s;
             mt.seed(seed);
+            mask = 0;
+            mask = ~mask;
             point = new double[s];
         }
         ~RandomNet() {
